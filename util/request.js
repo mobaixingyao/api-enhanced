@@ -10,6 +10,7 @@ const tunnel = require('tunnel')
 const fs = require('fs')
 const path = require('path')
 const tmpPath = require('os').tmpdir()
+const runtimeState = require('./runtime-state')
 const {
   cookieToJson,
   cookieObjToString,
@@ -20,21 +21,26 @@ const { URLSearchParams, URL } = require('url')
 const { APP_CONF } = require('../util/config.json')
 
 // 预先读取匿名token并缓存
-const anonymous_token = fs.readFileSync(
-  path.resolve(tmpPath, './anonymous_token'),
-  'utf-8',
-)
+let anonymous_token = runtimeState.getAnonymousToken()
+try {
+  anonymous_token =
+    fs.readFileSync(path.resolve(tmpPath, './anonymous_token'), 'utf-8') ||
+    anonymous_token
+  runtimeState.setAnonymousToken(anonymous_token)
+} catch (_) {}
 const xeapiPublicKeyPath = path.resolve(tmpPath, './xeapi_public_key')
 let xeapi_public_key = null
 const loadXeapiPublicKey = () => {
-  if (!xeapi_public_key && fs.existsSync(xeapiPublicKeyPath)) {
-    try {
+  xeapi_public_key = xeapi_public_key || runtimeState.getXeapiPublicKey()
+  try {
+    if (!xeapi_public_key && fs.existsSync(xeapiPublicKeyPath)) {
       xeapi_public_key = JSON.parse(
         fs.readFileSync(xeapiPublicKeyPath, 'utf-8'),
       )
-    } catch (error) {
-      console.log('[ERR]', error)
+      runtimeState.setXeapiPublicKey(xeapi_public_key)
     }
+  } catch (error) {
+    console.log('[ERR]', error)
   }
   return xeapi_public_key
 }
@@ -153,7 +159,10 @@ const processCookieObject = (cookie, uri) => {
   }
 
   if (!processedCookie.MUSIC_U) {
-    processedCookie.MUSIC_A = processedCookie.MUSIC_A || anonymous_token
+    processedCookie.MUSIC_A =
+      processedCookie.MUSIC_A ||
+      runtimeState.getAnonymousToken() ||
+      anonymous_token
   }
 
   return processedCookie

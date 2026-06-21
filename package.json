@@ -11,6 +11,9 @@
     "prepare": "husky install",
     "docs:format": "node scripts/format-docs.js",
     "docs:check": "node scripts/format-docs.js --check",
+    "pages:build": "node scripts/generate-pages-worker.js",
+    "pages:dev": "pnpm run pages:build && pnpm dlx wrangler pages dev public",
+    "pages:deploy": "pnpm run pages:build && pnpm dlx wrangler pages deploy public",
     "pkgwin": "pkg . -t node18-win-x64 -C GZip -o precompiled/app",
     "pkglinux": "pkg . -t node18-linux-x64 -C GZip -o precompiled/app",
     "pkgmacos": "pkg . -t node18-macos-x64 -C GZip -o precompiled/app"
@@ -52,7 +55,7 @@
   },
   "homepage": "https://neteasecloudmusicapienhanced.js.org/",
   "engines": {
-    "node": ">=12"
+    "node": ">=18"
   },
   "lint-staged": {
     "*.js": [

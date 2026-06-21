@@ -4,7 +4,6 @@ const path = require('path')
 const express = require('express')
 const request = require('./util/request')
 const packageJSON = require('./package.json')
-const exec = require('child_process').exec
 const cache = require('./util/apicache').middleware
 const { cookieToJson } = require('./util/index')
 const fileUpload = require('express-fileupload')
@@ -99,33 +98,30 @@ async function getModulesDefinitions(
  * need to notify users to upgrade it manually.
  */
 async function checkVersion() {
-  return new Promise((resolve) => {
-    exec('npm info NeteaseCloudMusicApiEnhanced version', (err, stdout) => {
-      if (!err) {
-        let version = stdout.trim()
+  try {
+    const packageName = encodeURIComponent(packageJSON.name)
+    const response = await fetch(
+      `https://registry.npmjs.org/${packageName}/latest`,
+    )
+    if (!response.ok) {
+      throw new Error(`npm registry responded ${response.status}`)
+    }
+    const metadata = await response.json()
+    const version = metadata.version
 
-        /**
-         * @param {VERSION_CHECK_RESULT} status
-         */
-        const resolveStatus = (status) =>
-          resolve({
-            status,
-            ourVersion: packageJSON.version,
-            npmVersion: version,
-          })
-
-        resolveStatus(
-          packageJSON.version < version
-            ? VERSION_CHECK_RESULT.NOT_LATEST
-            : VERSION_CHECK_RESULT.LATEST,
-        )
-      } else {
-        resolve({
-          status: VERSION_CHECK_RESULT.FAILED,
-        })
-      }
-    })
-  })
+    return {
+      status:
+        packageJSON.version < version
+          ? VERSION_CHECK_RESULT.NOT_LATEST
+          : VERSION_CHECK_RESULT.LATEST,
+      ourVersion: packageJSON.version,
+      npmVersion: version,
+    }
+  } catch (_) {
+    return {
+      status: VERSION_CHECK_RESULT.FAILED,
+    }
+  }
 }
 
 function parseCorsAllowOrigins(corsAllowOrigin) {
@@ -158,7 +154,7 @@ function getCorsAllowOrigin(allowOrigins, requestOrigin) {
 }
 
 function createConsoleSpinner(message = '启动中') {
-  if (!process.stdout.isTTY) {
+  if (!process.stdout || !process.stdout.isTTY) {
     return {
       stop() {},
     }
@@ -190,6 +186,7 @@ async function constructServer(moduleDefs) {
   const app = express()
   const { CORS_ALLOW_ORIGIN } = process.env
   const allowOrigins = parseCorsAllowOrigins(CORS_ALLOW_ORIGIN)
+  const isCloudflarePages = process.env.CLOUDFLARE_PAGES === 'true'
   app.set('trust proxy', true)
 
   /**
@@ -252,8 +249,8 @@ async function constructServer(moduleDefs) {
       limits: {
         fileSize: MAX_UPLOAD_SIZE_BYTES,
       },
-      useTempFiles: true,
-      tempFileDir: require('os').tmpdir(),
+      useTempFiles: !isCloudflarePages,
+      ...(isCloudflarePages ? {} : { tempFileDir: require('os').tmpdir() }),
       abortOnLimit: true,
       parseNested: true,
     }),
@@ -458,4 +455,5 @@ async function serveNcmApi(options) {
 module.exports = {
   serveNcmApi,
   getModulesDefinitions,
+  constructServer,
 }

@@ -155,6 +155,37 @@ docker run -d -p 3000:3000 moefurina/ncm-api:latest
 2. 在 Vercel 官网新建项目，导入 fork 的仓库
 3. 直接 Deploy
 
+## Cloudflare Pages 部署
+
+本项目支持通过 Cloudflare Pages Functions advanced mode 部署。Cloudflare 会使用 `public` 作为静态资源目录，并在构建时生成 `public/_worker.js` 作为 API Worker 入口。
+
+1. fork 本项目
+2. 在 Cloudflare Pages 新建项目，连接 fork 后的仓库
+3. Framework preset 选择 `None`
+4. Build command 填写：
+   ```bash
+   pnpm run pages:build
+   ```
+5. Build output directory 填写：
+   ```bash
+   public
+   ```
+6. Node.js version 使用 18 或更高版本
+
+本地调试可使用：
+
+```bash
+pnpm run pages:dev
+```
+
+需要命令行部署时可使用：
+
+```bash
+pnpm run pages:deploy
+```
+
+注意：Cloudflare Pages 使用 Workers 运行时，不是完整的常驻 Node.js 服务器。普通查询类接口会通过 `nodejs_compat` 适配运行；依赖本地临时文件、超大上传或原生 Node 进程能力的接口可能受 Pages 运行时限制。
+
 ## 腾讯云 Serverless 部署
 
 1. fork 本项目
