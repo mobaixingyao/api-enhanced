@@ -11,16 +11,14 @@ const {
 } = require('../util/fileHelper')
 
 let mm
+async function getMusicMetadata() {
+  if (!mm) {
+    mm = await import('music-metadata')
+  }
+  return mm
+}
+
 module.exports = async (query, request) => {
-  mm = require('music-metadata')
-
-  query.songFile.name = Buffer.from(query.songFile.name, 'latin1').toString(
-    'utf-8',
-  )
-  const ext = getFileExtension(query.songFile.name)
-  const filename = sanitizeFilename(query.songFile.name)
-  const bitrate = 999000
-
   if (!query.songFile) {
     return Promise.reject({
       status: 500,
@@ -30,6 +28,13 @@ module.exports = async (query, request) => {
       },
     })
   }
+
+  query.songFile.name = Buffer.from(query.songFile.name, 'latin1').toString(
+    'utf-8',
+  )
+  const ext = getFileExtension(query.songFile.name)
+  const filename = sanitizeFilename(query.songFile.name)
+  const bitrate = 999000
 
   const useTemp = isTempFile(query.songFile)
   let fileSize = await getFileSize(query.songFile)
@@ -58,10 +63,11 @@ module.exports = async (query, request) => {
 
     try {
       let metadata
+      const musicMetadata = await getMusicMetadata()
       if (useTemp) {
-        metadata = await mm.parseFile(query.songFile.tempFilePath)
+        metadata = await musicMetadata.parseFile(query.songFile.tempFilePath)
       } else {
-        metadata = await mm.parseBuffer(
+        metadata = await musicMetadata.parseBuffer(
           query.songFile.data,
           query.songFile.mimetype,
         )
