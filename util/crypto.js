@@ -17,6 +17,7 @@ const xeapiStaticKey = Buffer.from(
 const xeapiSignKey =
   'mUHCwVNWJbunMqAHf5MImuirT6plvs6VSFW62MGHstFQxhBGdEoIhLItH3djc4+FB/OKty3+lL2rGeoFBpVe5g=='
 const x25519SpkiPrefix = Buffer.from('302a300506032b656e032100', 'hex')
+const ecbIv = Buffer.alloc(0)
 
 const aesEncrypt = (text, mode, key, iv, format = 'base64') => {
   let encrypted = CryptoJS.AES.encrypt(
@@ -150,7 +151,7 @@ const decrypt = (cipher) => {
 }
 
 const aesEcbEncrypt = (key, plaintext) => {
-  const cipher = crypto.createCipheriv(`aes-${key.length * 8}-ecb`, key, null)
+  const cipher = crypto.createCipheriv(`aes-${key.length * 8}-ecb`, key, ecbIv)
   return Buffer.concat([cipher.update(Buffer.from(plaintext)), cipher.final()])
 }
 
@@ -158,7 +159,7 @@ const aesEcbDecrypt = (key, ciphertext) => {
   const decipher = crypto.createDecipheriv(
     `aes-${key.length * 8}-ecb`,
     key,
-    null,
+    ecbIv,
   )
   return Buffer.concat([decipher.update(ciphertext), decipher.final()])
 }

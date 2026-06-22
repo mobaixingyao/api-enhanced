@@ -192,7 +192,9 @@ async function constructServer(moduleDefs) {
   /**
    * Serving static files
    */
-  app.use(express.static(path.join(__dirname, 'public')))
+  if (!isCloudflarePages) {
+    app.use(express.static(path.join(__dirname, 'public')))
+  }
   /**
    * CORS & Preflight request
    */
