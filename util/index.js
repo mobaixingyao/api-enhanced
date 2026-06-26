@@ -38,7 +38,8 @@ function parseCIDR(cidr) {
 // 从china_ip_ranges.txt加载中国IP段（CIDR格式）
 const chinaIPRanges = (function loadChinaIPRanges() {
   try {
-    const filePath = path.join(__dirname, '../data/china_ip_ranges.txt')
+    const baseDir = typeof __dirname !== 'undefined' ? __dirname : '.'
+    const filePath = path.join(baseDir, '../data/china_ip_ranges.txt')
     const content = fs.readFileSync(filePath, 'utf-8')
     const lines = content
       .split('\n')

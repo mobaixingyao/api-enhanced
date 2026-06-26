@@ -191,6 +191,8 @@ const generateRequestId = () => {
 
 const createRequest = (uri, data, options) => {
   return new Promise((resolve, reject) => {
+    ;(async () => {
+      try {
     // 变量声明和初始化
     const headers = options.headers ? { ...options.headers } : {}
     const ip = options.realIP || options.ip || ''
@@ -284,7 +286,7 @@ const createRequest = (uri, data, options) => {
         }
         headers['Cookie'] = cookieObjToString(xeapiCookie)
         url = (options.domain || XEAPI_DOMAIN) + '/xeapi/' + uri.substr(5)
-        encryptData = encrypt.xeapi(uri, data, {
+        encryptData = await encrypt.xeapi(uri, data, {
           ...options,
           publicKeyState: xeapiPublicKey,
           sessionId: xeapiSessionId,
@@ -399,7 +401,7 @@ const createRequest = (uri, data, options) => {
     axios(settings)
       .then((res) => {
         const body = res.data
-        answer.cookie = (res.headers['set-cookie'] || []).map((x) =>
+        answer.cookie = [].concat(res.headers['set-cookie'] || []).map((x) =>
           x.replace(/\s*Domain=[^(;|$)]+;*/, ''),
         )
 
@@ -462,6 +464,16 @@ const createRequest = (uri, data, options) => {
         console.log('[ERR]', answer)
         reject(answer)
       })
+      } catch (err) {
+        const errAnswer = {
+          status: 502,
+          body: { code: 502, msg: err.message || err },
+          cookie: [],
+        }
+        console.log('[ERR]', errAnswer)
+        reject(errAnswer)
+      }
+    })()
   })
 }
 

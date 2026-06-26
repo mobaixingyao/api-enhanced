@@ -23,7 +23,7 @@ module.exports = async (query, request) => {
     return {
       status: 200,
       body: {},
-      cookie: result.cookie,
+      cookie: [],
     }
   }
 }

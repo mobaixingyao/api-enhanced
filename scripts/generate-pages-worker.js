@@ -3,7 +3,8 @@ const path = require('path')
 
 const rootDir = path.join(__dirname, '..')
 const moduleDir = path.join(rootDir, 'module')
-const outputFile = path.join(rootDir, 'public', '_worker.js')
+const outputDir = path.join(rootDir, 'dist')
+const outputFile = path.join(outputDir, 'worker.js')
 
 const specialRoutes = {
   'daily_signin.js': '/daily_signin',
@@ -119,5 +120,6 @@ export default {
 `
 }
 
+fs.mkdirSync(outputDir, { recursive: true })
 fs.writeFileSync(outputFile, generateWorker())
 console.log(`Generated ${path.relative(rootDir, outputFile)}`)

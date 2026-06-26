@@ -6,9 +6,6 @@
 const logger = require('../util/logger.js')
 const createOption = require('../util/option.js')
 module.exports = async (query, request) => {
-  const {
-    matchID,
-  } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
   require('dotenv').config()
   const data = {
     ids: '[' + query.id + ']',
@@ -17,6 +14,9 @@ module.exports = async (query, request) => {
   }
   if (query.unblock === 'true') {
     try {
+      const {
+        matchID,
+      } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
       const result = await matchID(query.id, query.source)
       logger.info('Starting unblock(uses modules unblock):', query.id, result)
       const useProxy = process.env.ENABLE_PROXY || 'false'

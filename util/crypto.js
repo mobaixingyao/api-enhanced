@@ -1,5 +1,5 @@
 const CryptoJS = require('crypto-js')
-const crypto = require('crypto')
+const crypto = require('node:crypto')
 const forge = require('node-forge')
 const zlib = require('zlib')
 const iv = '0102030405060708'
@@ -205,17 +205,35 @@ const xeapiMidTransform = (ciphertext) => {
   return Buffer.concat([random, b64.subarray(rot), b64.subarray(0, rot)])
 }
 
-const xeapiEncryptS = (dynamicKey, publicKeyState, os) => {
+const xeapiEncryptS = async (dynamicKey, publicKeyState, os) => {
   const peerRaw = Buffer.from(publicKeyState.publicKey, 'base64')
-  const peerKey = createX25519PublicKey(peerRaw)
-  const { publicKey, privateKey } = crypto.generateKeyPairSync('x25519')
+  // Workers 原生 node:crypto 未实现 generateKeyPairSync+diffieHellman，也未实现
+  // createECDH('X25519')。改用 Web Crypto API (crypto.subtle) 完成 X25519 ECDH 密钥协商。
+  const subtle = globalThis.crypto.subtle
+  const keyPair = await subtle.generateKey(
+    { name: 'X25519' },
+    true,
+    ['deriveBits'],
+  )
   const ephemeralRaw = Buffer.from(
-    publicKey.export({ format: 'der', type: 'spki' }),
-  ).subarray(-32)
-  const sharedSecret = crypto.diffieHellman({
-    privateKey,
-    publicKey: peerKey,
-  })
+    new Uint8Array(await subtle.exportKey('raw', keyPair.publicKey)),
+  )
+  const peerKey = await subtle.importKey(
+    'raw',
+    new Uint8Array(peerRaw),
+    { name: 'X25519' },
+    false,
+    [],
+  )
+  const sharedSecret = Buffer.from(
+    new Uint8Array(
+      await subtle.deriveBits(
+        { name: 'X25519', public: peerKey },
+        keyPair.privateKey,
+        256,
+      ),
+    ),
+  )
   const aesKey = deriveX25519AesKey(sharedSecret, ephemeralRaw)
   const iv = crypto.randomBytes(12)
   const cipher = crypto.createCipheriv('aes-128-gcm', aesKey, iv)
@@ -256,7 +274,7 @@ const buildXeapiPlaintext = (uri, data, options = {}) => {
   return JSON.stringify(fields)
 }
 
-const xeapi = (uri, data, options = {}) => {
+const xeapi = async (uri, data, options = {}) => {
   const publicKeyState = options.publicKeyState
   if (!publicKeyState) {
     throw new Error('xeapi publicKeyState is required')
@@ -272,7 +290,11 @@ const xeapi = (uri, data, options = {}) => {
     dynamicKey,
     xeapiMidTransform(aesEcbEncrypt(xeapiStaticKey, plaintext)),
   )
-  const s = xeapiEncryptS(dynamicKey, publicKeyState, options.os || 'android')
+  const s = await xeapiEncryptS(
+    dynamicKey,
+    publicKeyState,
+    options.os || 'android',
+  )
   const r = aesEcbEncrypt(
     xeapiStaticKey,
     Buffer.from(

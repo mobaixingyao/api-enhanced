@@ -25,6 +25,13 @@ module.exports = async (query, request) => {
     event_id: query.evid,
     sign: query.sign,
   })}`
+  let qrimg = ''
+  try {
+    // Workers 中 pngjs 流式 PNG 渲染不兼容，改用纯 JS 的 SVG 渲染器
+    const svg = await QRCode.toString(result, { type: 'svg' })
+    qrimg = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+  } catch (e) {}
+
   return {
     status: 200,
     body: {
@@ -32,7 +39,7 @@ module.exports = async (query, request) => {
       data: {
         qrCode: res.body.data.qrCode,
         qrurl: result,
-        qrimg: await QRCode.toDataURL(result),
+        qrimg,
       },
     },
   }
