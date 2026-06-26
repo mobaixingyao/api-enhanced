@@ -309,12 +309,12 @@ async function constructServer(moduleDefs) {
           if (options.randomCNIP) {
             ip = global.cnIp
           } else {
-            ip = req.ip
+            ip = req.ip || ''
 
-            if (ip.substring(0, 7) == '::ffff:') {
+            if (ip && ip.substring(0, 7) == '::ffff:') {
               ip = ip.substring(7)
             }
-            if (ip == '::1') {
+            if (!ip || ip == '::1') {
               ip = global.cnIp
             }
           }

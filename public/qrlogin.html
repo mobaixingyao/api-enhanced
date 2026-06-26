@@ -120,7 +120,17 @@
     <p class="hint">请打开网易云音乐App，扫描上方二维码完成登录</p>
   </div>
 
-  <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+  <script>
+    // 用原生 fetch 替代 axios CDN 依赖，避免 ERR_CONNECTION_CLOSED
+    const axios = async (config) => {
+      const res = await fetch(config.url, {
+        method: config.method || 'GET',
+        headers: config.data ? { 'Content-Type': 'application/json' } : {},
+        body: config.data ? JSON.stringify(config.data) : undefined,
+      })
+      return { data: await res.json() }
+    }
+  </script>
   <script>
     async function login() {
       let timer

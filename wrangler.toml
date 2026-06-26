@@ -10,3 +10,4 @@ binding = "ASSETS"
 [vars]
 NODE_ENV = "production"
 CLOUDFLARE_PAGES = "true"
+ENABLE_RANDOM_CN_IP = "true"
