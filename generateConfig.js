@@ -25,9 +25,7 @@ async function generateConfig() {
         )
       } catch (_) {}
     }
-  } catch (error) {
-    console.log(error)
-  }
+  } catch (error) {}
   try {
     let currentPublicKey = runtimeState.getXeapiPublicKey() || {}
     try {
@@ -44,9 +42,7 @@ async function generateConfig() {
         'utf-8',
       )
     } catch (_) {}
-  } catch (error) {
-    console.log(error)
-  }
+  } catch (error) {}
   if (!hasAnonymousToken) {
     try {
       const res = await registerAnonimous({}, request)
@@ -62,9 +58,7 @@ async function generateConfig() {
           )
         } catch (_) {}
       }
-    } catch (error) {
-      console.log(error)
-    }
+    } catch (error) {}
   }
 }
 module.exports = generateConfig

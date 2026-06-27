@@ -9,9 +9,7 @@ try {
   if (!fs.existsSync(anonymousTokenPath)) {
     fs.writeFileSync(anonymousTokenPath, '', 'utf-8')
   }
-  runtimeState.setAnonymousToken(
-    fs.readFileSync(anonymousTokenPath, 'utf-8'),
-  )
+  runtimeState.setAnonymousToken(fs.readFileSync(anonymousTokenPath, 'utf-8'))
 } catch (_) {
   runtimeState.setAnonymousToken('')
 }

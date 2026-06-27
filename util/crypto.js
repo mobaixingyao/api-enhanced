@@ -210,11 +210,9 @@ const xeapiEncryptS = async (dynamicKey, publicKeyState, os) => {
   // Workers 原生 node:crypto 未实现 generateKeyPairSync+diffieHellman，也未实现
   // createECDH('X25519')。改用 Web Crypto API (crypto.subtle) 完成 X25519 ECDH 密钥协商。
   const subtle = globalThis.crypto.subtle
-  const keyPair = await subtle.generateKey(
-    { name: 'X25519' },
-    true,
-    ['deriveBits'],
-  )
+  const keyPair = await subtle.generateKey({ name: 'X25519' }, true, [
+    'deriveBits',
+  ])
   const ephemeralRaw = Buffer.from(
     new Uint8Array(await subtle.exportKey('raw', keyPair.publicKey)),
   )

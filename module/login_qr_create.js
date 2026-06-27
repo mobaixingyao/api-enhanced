@@ -17,13 +17,17 @@ module.exports = async (query) => {
   let qrimg = ''
   if (query.qrimg) {
     try {
-      // Workers 中 pngjs 流式 PNG 渲染不兼容（pack() 事件不触发导致挂起），
-      // 改用纯 JS 的 SVG 渲染器生成 data URL
-      const svg = await QRCode.toString(url, { type: 'svg' })
-      qrimg = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+      // 优先使用 PNG 格式（与文档/原版一致，兼容 PIL 等常见图片解码库）
+      qrimg = await QRCode.toDataURL(url)
     } catch (e) {
-      // SVG 渲染失败时返回空，客户端可使用 qrurl 自行生成二维码
-      qrimg = ''
+      // Workers 等环境 pngjs 渲染不兼容时，回退到纯 JS 的 SVG 渲染
+      try {
+        const svg = await QRCode.toString(url, { type: 'svg' })
+        qrimg = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+      } catch (e2) {
+        // 两种渲染均失败时返回空，客户端可使用 qrurl 自行生成二维码
+        qrimg = ''
+      }
     }
   }
 

@@ -5,7 +5,7 @@ const express = require('express')
 const request = require('./util/request')
 const packageJSON = require('./package.json')
 const cache = require('./util/apicache').middleware
-const { cookieToJson } = require('./util/index')
+const { cookieToJson, generateRandomChineseIP } = require('./util/index')
 const fileUpload = require('express-fileupload')
 const decode = require('safe-decode-uri-component')
 const logger = require('./util/logger.js')
@@ -307,7 +307,7 @@ async function constructServer(moduleDefs) {
           let ip = ''
 
           if (options.randomCNIP) {
-            ip = global.cnIp
+            ip = global.cnIp || generateRandomChineseIP()
           } else {
             ip = req.ip || ''
 
